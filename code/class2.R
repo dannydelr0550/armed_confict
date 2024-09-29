@@ -31,6 +31,8 @@ disaster_filtered_select <- dplyr::select(disaster_filtered, c('Year', 'ISO', 'D
 disaster_filtered_select <- disaster_filtered_select %>% group_by(Year, ISO) %>%
   summarise(drought = max(drought), earthquake = max(earthquake))
 
+  
+}
 
 
 

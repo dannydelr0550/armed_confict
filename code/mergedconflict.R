@@ -11,4 +11,3 @@ conflictdata_select <- conflictdata %>%
   summarise(totaldeath = max(best))  %>%
   mutate(conflict = if_else(totaldeath < 25, 0, 1))  %>%
   mutate(year = year + 1)
-

@@ -23,6 +23,13 @@ final_data <- left_join(covs, final_mort_data, by = c("ISO", "year"))
 final_data <- final_data %>%
   mutate(drought = replace_na(drought, 0),
          earthquake = replace_na(earthquake, 0),
-         totaldeath = replace_na(totaldeath, 0))
+         totaldeath = replace_na(totaldeath, 0),
+         conflict = replace_na(conflict, 0))
 
 write.csv(final_data, file = here("output_files", "finaldata.csv"), row.names = FALSE)
+
+finaldata <- read.csv(here("output_files", "finaldata.csv"), header = TRUE)
+names(finaldata)
+
+finaldata %>%
+  dplyr::filter(country_name == "Ecuador")

@@ -29,8 +29,7 @@ arm_conf_year <- finaldata %>%
       armconfsum > 5 ~ 2
     )
   )
-+# Load required library
-library(table1)
+
 
 # Custom rendering function
 my.render.cont <- function(x) {
@@ -51,9 +50,6 @@ table1(
   ~ `GDP (1000s)` + OECD + `OECD In 2023` + `Pop. Density` + Urban + `Age Dependence` + `Male Education` + Temperature + Rainfall | factor(conflict_groups), 
   data = arm_conf_year, render.continuous = my.render.cont, render.missing = NULL, caption = caption, overall = c(left = "Total")
 )
-
-
-
 
 
 

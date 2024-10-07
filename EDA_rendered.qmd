@@ -1,0 +1,190 @@
+---
+title: "Exploratory Data Analysis: Armed Conflict"
+author: "Daniel Del Rosso"
+format: html
+editor: visual
+---
+
+```{r}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+## Exploring Means
+
+Before I get into this, let's load some libraries:
+
+```{r}
+#| output: false
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(here)
+
+```
+
+The first thing I want to do is explore how the mean deaths depend on the year and country. First, by country:
+
+```{r}
+
+finaldata <- read.csv(here("output_files", "finaldata.csv"), header = TRUE)
+
+country_means <- finaldata %>%
+  group_by(ISO) %>%
+  summarise(
+    mean_value = mean(totaldeath, na.rm = TRUE),
+    median_value = median(totaldeath, na.rm = TRUE),
+    sd_value = sd(totaldeath, na.rm = TRUE),
+    min_value = min(totaldeath, na.rm = TRUE),
+    max_value = max(totaldeath, na.rm = TRUE),
+    count = n() 
+  ) %>%
+  dplyr::arrange(desc(mean_value))
+
+  write.csv(country_means, file = here("output_files", "countrymeans.csv"), row.names = FALSE) 
+  head(country_means)
+```
+
+Next, what I want to do is get a `summary` of each column, so that I can examine the NA values and get a sense of the magnitude of our data. This allowed me to realize there was a mistake in one of my previous files, so I could go back and impute 0.
+
+```{r}
+#| echo: false
+summary(finaldata)
+```
+
+Now, I will continue with my previous task. I am not too interested in the values of the mean deaths by year (unlike the countries), but I am somewhat interested in at least seeing if there is a trend. To plot, I used a log scale to account for the range in y-values, adding 1 to the death count to ensure that 0 counts map to 0. I added a boxplot, but since all of the medians were just 0, it resembled a bar graph.
+
+```{r}
+#| echo: false
+finaldata %>%
+  ggplot(aes(x = year, y = log(totaldeath + 1))) +
+  geom_point(size = 1, alpha = 0.1) +
+  theme_classic() +
+  labs(
+    x = "Year",
+    y = "Log of Total Deaths)",
+  ) +
+  scale_color_brewer(palette = "Pastel1") +
+  geom_smooth()
+
+```
+
+```{r}
+#| echo: false
+
+ggplot(finaldata, aes(x = factor(year), y = log(totaldeath + 1), fill = factor(year))) +
+  geom_boxplot() +
+  labs(
+    x = "Year",
+    y = "Log of Total Death",
+    title = "Boxplot of Total Death by Year"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    legend.position = "none"  
+  ) +
+  scale_x_discrete(breaks = scales::breaks_pretty(n = 10)) 
+```
+
+Finally, I want to see the country-years with the highest death count. I know we defined conflict as a categorical variable, but I am just trying to see how much information we are losing by doing so.
+
+```{r}
+#| echo: false
+
+country_year_means <- finaldata %>%
+  group_by(ISO, year) %>%
+  summarise(
+    mean_value = mean(totaldeath, na.rm = TRUE),
+    median_value = median(totaldeath, na.rm = TRUE),
+    sd_value = sd(totaldeath, na.rm = TRUE),
+    min_value = min(totaldeath, na.rm = TRUE),
+    max_value = max(totaldeath, na.rm = TRUE),
+    count = n() 
+  ) %>%
+  dplyr::arrange(desc(mean_value))
+
+  write.csv(country_year_means, file = here("output_files", "countrymeans.csv"), row.names = FALSE) 
+  head(country_year_means)
+```
+
+These results align with the Eritrean-Ethiopian war at the turn of the Millenium and the Syrian Civil War in the 2000s.
+
+Now, let's see what the values are for the outcomes at these years:
+
+```{r}
+#| echo: false
+
+#Note to self: Select is great for filtering columns, filter is better for filtering rows
+maxdeath_data <- finaldata %>%
+  filter(
+    (ISO == "ETH" & (year == 2000 | year == 2001)) |
+    (ISO == "ERI" & year == 2000) |
+    (ISO == "SYR" & (year == 2014 | year == 2015 | year == 2016))
+  ) %>%
+  select(year, ISO, totaldeath, under5, matmort, neonatal, infant) 
+
+maxdata_mort_means <- summarise(maxdeath_data, 
+          mean_matmort = mean(matmort, na.rm = TRUE),
+          mean_under5 = mean(under5, na.rm = TRUE),
+          mean_neonatal = mean(neonatal, na.rm = TRUE),
+          mean_infant = mean(infant, na.rm = TRUE),
+          )
+
+maxdeath_data
+maxdata_mort_means
+```
+
+To compare this, let's see what the means are across the whole dataset:
+
+```{r}
+#| echo: false
+
+alldata_mort_means <- summarise(finaldata, 
+          mean_matmort = mean(matmort, na.rm = TRUE),
+          mean_under5 = mean(under5, na.rm = TRUE),
+          mean_neonatal = mean(neonatal, na.rm = TRUE),
+          mean_infant = mean(infant, na.rm = TRUE),
+          )
+
+alldata_mort_means
+```
+
+Let's go a little bit further. Let's see how the means compare with the means in our binary conflict specification:
+
+```{r}
+#| echo: false
+
+confdata_mort <- finaldata %>%
+  filter(conflict == 1)
+
+confdata_mort_means <- summarise(confdata_mort, 
+          mean_matmort = mean(matmort, na.rm = TRUE),
+          mean_under5 = mean(under5, na.rm = TRUE),
+          mean_neonatal = mean(neonatal, na.rm = TRUE),
+          mean_infant = mean(infant, na.rm = TRUE),
+          )
+
+confdata_mort_means
+```
+
+Finally, we combine them all to visualize:
+
+```{r}
+#| echo: false
+
+means <- rbind(maxdata_mort_means, confdata_mort_means, alldata_mort_means)
+rownames(means) <- c("Max Data", "Conf_1 Data", "All Data")
+
+means
+```
+
+There doesn't look to be that much of a difference!
+
+For the quiz:
+
+```{r}
+hist(finaldata$matmort)
+hist(finaldata$neonatal)
+hist(finaldata$infant)
+hist(finaldata$under5)
+```

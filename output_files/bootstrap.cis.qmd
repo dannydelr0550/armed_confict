@@ -1,0 +1,75 @@
+---
+title: "Bootstrap"
+author: "Daniel Del Rosso"
+format: html
+editor: visual
+embed-resources: true
+---
+
+We first load our packages and data:
+
+```{r}
+#| include = FALSE
+library(boot)
+library(here)
+library(dplyr)
+
+finaldata <- read.csv(here("output_files/finaldata.csv"))
+```
+
+We then filter by year 2017:
+
+```{r}
+finaldata2017 <- finaldata %>% 
+  filter(year == 2017) 
+```
+
+We define the function for the boot package to use:
+
+```{r}
+getmeddiff <- function(data, indices, variable) {
+  sample_data <- data[indices, ]
+  group_meds <- tapply(sample_data[[variable]], sample_data$conflict, FUN = function(x) median(x))
+  meddiff <- group_meds[2] - group_meds[1]
+  return(meddiff)
+}
+
+```
+
+We do some final filtering and run the bootstrap. We subsequently calculate the confidence intervals.
+
+```{r}
+finaldata2017_neonatal <- finaldata2017 %>% 
+  filter(!is.na(neonatal))
+
+finaldata2017_under5 <- finaldata2017 %>% 
+  filter(!is.na(under5))
+
+
+finaldata2017_infant <- finaldata2017 %>% 
+  filter(!is.na(infant))
+
+bootout_neonatal <- boot(finaldata2017_neonatal, statistic = getmeddiff, strata = finaldata2017_neonatal$conflict, variable = "neonatal",  R = 1000)
+
+bootout_under5 <- boot(finaldata2017_under5, statistic = getmeddiff, strata = finaldata2017_under5$conflict, variable = "under5", R = 1000)
+
+bootout_infant <- boot(finaldata2017_infant, statistic = getmeddiff, strata = finaldata2017_infant$conflict, variable = "infant", R = 1000)
+
+```
+
+```{r}
+boot.ci(boot.out = bootout_neonatal, conf = 0.95, type = c("basic", "perc", "bca"))
+
+```
+
+```{r}
+boot.ci(boot.out = bootout_under5, conf = 0.95, type = c("basic", "perc", "bca"))
+
+```
+
+```{r}
+boot.ci(boot.out = bootout_infant, conf = 0.95, type = c("basic", "perc", "bca"))
+
+```
+
+For infant mortality, neonatal mortality, and under-5 mortality, we have significacnt evidence that the difference in medians between countries experiencing conflict and non-conflict is greater than 0, at $\alpha = 0.05$.

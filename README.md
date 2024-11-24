@@ -1,1 +1,1 @@
-Hello, my name is Danny, and I am a MSc student in the DLSPH at UofT interested in genomic statistics. I hope you enjoy my first github repo!
+Hello, my name is Danny, and I am a MSc student in the DLSPH at UofT interested in genomic statistics. This repository contains my attempts to replicate the findings of the study "Implications of armed conflict for maternal and child health: A regression analysis of data from 181 countries for 2000–2019" by Jawad et. al, as a part of the course CHL8010 (Introduction to Statistical Programming). Enjoy!
